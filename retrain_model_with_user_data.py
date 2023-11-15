@@ -1,5 +1,3 @@
-# retrain_model_with_user_data.py
-
 import os
 import numpy as np
 import tensorflow as tf
@@ -20,11 +18,12 @@ user_folder_path = os.path.join(dataset_path, "user")
 data_file_path = os.path.join(user_folder_path, "data")
 
 # Load the model
-loaded_model = tf.keras.models.load_model('mojo_ai_model.h5')
+loaded_model = tf.keras.models.load_model('mojo_ai_model_cnn_lstm.h5')
 
 # Simulated user interaction
-user_question = "How does Mojo handle interop with Python?"
-user_answer = "Mojo uses a Python API for seamless interop."
+user_question = "write the hello world program in mojo"
+user_answer = '''fn main():
+   print("Hello, world!")'''
 
 # Store the user question and answer
 user_data = [f"{user_question}\t{user_answer}\n"]
@@ -37,8 +36,12 @@ with open(data_file_path, 'w', encoding='utf-8') as user_data_file:
 user_sequences = tokenizer.texts_to_sequences([user_question])
 user_padded_sequences = pad_sequences(user_sequences, maxlen=max_seq_length, padding='post')
 
+# Adjust label_mapping to set 'user' within the valid range [0, 3]
+if 'user' in label_mapping:
+    label_mapping['user'] = min(2, len(label_mapping) - 1)  # Update 'user' to a valid numerical label within [0, 3]
+
 # Convert the label to numerical format
-user_label = label_mapping["user"]
+user_label = label_mapping.get("user", len(label_mapping))  # Assign the last index if 'user' not found
 
 # Continue training with the new user data
 loaded_model.fit(user_padded_sequences, np.array([user_label]), epochs=5, batch_size=1)
